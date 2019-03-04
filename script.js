@@ -1,5 +1,9 @@
 var song;
 var fft;
+var video;
+var poseNet;
+var targetX = 0;
+var targetY = 0;
 
 class Attractor {
   constructor(x, y, m) {
@@ -20,6 +24,10 @@ class Attractor {
     force.mult(strength);
 
     return force;
+  }
+
+  changeLocation(x, y) {
+    this.location = createVector(x, y);
   }
 }
 
@@ -71,19 +79,36 @@ class Mover {
 
     return force;
   }
-
 }
 
 function preload() {
   soundFormats('mp3');
-  song = loadSound('assets/zico-baby.mp3');
+  song = loadSound('assets/dna.mp3');
 }
 
 var attractor;
 var movers;
 
 function setup() {
-  var cvs = createCanvas(500, 500);
+  var cvs = createCanvas(1200, 800);
+  // video = createCapture(VIDEO);
+  frameRate(30);
+
+  targetX = width / 2;
+  targetY = height / 2;
+
+  // poseNet = ml5.poseNet(video, 'single', () => {
+  //   console.log('Model ready');
+  // });
+  // poseNet.on('pose', (results) => {
+  //   if (results.length > 0) {
+  //     targetX = results[0].pose.keypoints[10].position.x;
+  //     targetY = results[0].pose.keypoints[10].position.y;
+  //     // console.log(`${targetX} / ${targetY}`);
+  //   }
+  // });
+  // video.hide();
+
   cvs.parent('canvasContainer');
   background(220);
   cvs.mousePressed(toggle);
@@ -96,7 +121,7 @@ function setup() {
   attractor = new Attractor(width/2, height/2, 10);
   movers = [];
 
-  for (var i = 0; i < 256; i++) {
+  for (var i = 0; i < 24; i++) {
     movers[i] = new Mover(random(width), random(height), 2);
   }
 }
@@ -104,6 +129,11 @@ function setup() {
 function draw() {
   background(255);
   var spectrum = fft.analyze();
+
+  // attractor.changeLocation(
+    // map(targetX, -100, 400, width, 0),
+    // map(targetY, -100, 400, 0, height)
+  // );
 
   for (var i = 0; i < movers.length; i++) {
     var energy;
