@@ -1,9 +1,11 @@
-var song;
-var fft;
-var video;
-var poseNet;
-var targetX = 0;
-var targetY = 0;
+let song;
+let mediaFileType = `m4a`;
+let mediaFilePath = `assets/slchld-she-likes-spring-I-prefer-winter.m4a`;
+let fft;
+let video;
+let poseNet;
+let targetX = 0;
+let targetY = 0;
 
 class Attractor {
   constructor(x, y, m) {
@@ -14,13 +16,13 @@ class Attractor {
 
   // mover of type Mover
   attract(mover) {
-    var force = this.location.copy();
+    let force = this.location.copy();
     force.sub(mover.location);
-    var distance = force.mag();
+    let distance = force.mag();
     distance = constrain(distance, 5, 20);
     force.normalize();
 
-    var strength = (this.G * this.mass * mover.mass) / (distance * distance);
+    let strength = (this.G * this.mass * mover.mass) / (distance * distance);
     force.mult(strength);
 
     return force;
@@ -34,11 +36,11 @@ class Attractor {
 class Mover {
   constructor(x, y, m) {
     this.location = createVector(x, y);
-    this.velocity = createVector(0.1, 0);
+    this.velocity = createVector(0.2, 0);
     this.acceleration = createVector(0, 0);
     this.history = []; // Array of p5.Vector
     this.mass = m;
-    this.G = 0.1;
+    this.G = 0.3;
   }
 
   update() {
@@ -63,18 +65,18 @@ class Mover {
   }
 
   applyForce(force) {
-    var f = force.copy();
+    let f = force.copy();
     f.mult(1);
     this.acceleration.add(f);
   }
 
   attract(other) {
-    var force = this.location.copy();
+    let force = this.location.copy();
     force.sub(other.location);
-    var distance = force.mag();
+    let distance = force.mag();
     force.normalize();
 
-    var strength = (this.G * this.mass * other.mass) / (distance * distance);
+    let strength = (this.G * this.mass * other.mass) / (distance * distance);
     force.mult(strength);
 
     return force;
@@ -82,38 +84,37 @@ class Mover {
 }
 
 function preload() {
-  soundFormats('mp3');
-  song = loadSound('assets/dna.mp3');
+  soundFormats(mediaFileType);
+  song = loadSound(mediaFilePath);
 }
 
-var attractor;
-var movers;
+let attractor;
+let movers;
 
 function setup() {
-  var cvs = createCanvas(1200, 800);
-  // video = createCapture(VIDEO);
-  frameRate(30);
+  let cvs = createCanvas(1200, 800);
 
   targetX = width / 2;
   targetY = height / 2;
 
-  // poseNet = ml5.poseNet(video, 'single', () => {
-  //   console.log('Model ready');
-  // });
-  // poseNet.on('pose', (results) => {
-  //   if (results.length > 0) {
-  //     targetX = results[0].pose.keypoints[10].position.x;
-  //     targetY = results[0].pose.keypoints[10].position.y;
-  //     // console.log(`${targetX} / ${targetY}`);
-  //   }
-  // });
-  // video.hide();
+  video = createCapture(VIDEO);
+  poseNet = ml5.poseNet(video, 'single', () => {
+    console.log('Model ready');
+  });
+  poseNet.on('pose', (results) => {
+    if (results.length > 0) {
+      targetX = results[0].pose.keypoints[10].position.x;
+      targetY = results[0].pose.keypoints[10].position.y;
+      // console.log(`${targetX} / ${targetY}`);
+    }
+  });
+  video.hide();
 
   cvs.parent('canvasContainer');
   background(220);
   cvs.mousePressed(toggle);
 
-  song.setVolume(0.2);
+  song.setVolume(0.5);
   song.play();
 
   fft = new p5.FFT(0.8, 256);
@@ -121,22 +122,22 @@ function setup() {
   attractor = new Attractor(width/2, height/2, 10);
   movers = [];
 
-  for (var i = 0; i < 24; i++) {
+  for (let i = 0; i < 24; i++) {
     movers[i] = new Mover(random(width), random(height), 2);
   }
 }
 
 function draw() {
   background(255);
-  var spectrum = fft.analyze();
+  let spectrum = fft.analyze();
 
-  // attractor.changeLocation(
-    // map(targetX, -100, 400, width, 0),
-    // map(targetY, -100, 400, 0, height)
-  // );
+  attractor.changeLocation(
+    map(targetX, -100, 400, width, 0),
+    map(targetY, -100, 400, 0, height/2)
+  );
 
-  for (var i = 0; i < movers.length; i++) {
-    var energy;
+  for (let i = 0; i < movers.length; i++) {
+    let energy;
 
     if (i >= 0 && i <= 64) {
       energy = fft.getEnergy("bass");
@@ -148,7 +149,7 @@ function draw() {
       energy = fft.getEnergy("treble");
     }
 
-    movers[i].changeMass(map(energy, 0, 255, 2, 12));
+    movers[i].changeMass(map(energy, 0, 255, 2, 10));
     movers[i].applyForce(attractor.attract(movers[i]));
     movers[i].update();
 
