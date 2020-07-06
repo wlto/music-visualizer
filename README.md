@@ -11,8 +11,9 @@
 
 1. Create an `assets` folder which contains a media file of the song you want to visualize to.
   Example: `assets/jingle-bell.mp3`
-2. Open the `index.html` file on a browser (Preferably Chrome).
-3. Enjoy the visuals!
+2. Edit the `mediaFileType` and `mediaFilePath` variables in `script.js` (on top of the file).
+3. Open the `index.html` file on a browser (Preferably Chrome).
+4. Enjoy the visuals!
 
 ## Known Issues
 
