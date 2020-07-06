@@ -1,7 +1,7 @@
 ## Music Visualizer
 
 [Demo Link](https://music-visualizer-private-copy.vercel.app/)
-> Notes: Please wait for around 2-3 seconds for everything to load properly and then click on the artboard to play :)
+> Notes: Please wait for around 2-3 seconds for everything to load properly and then click twice on the artboard to play :)
 
 ## Tech stack
 
