@@ -1,3 +1,13 @@
+
+let song;
+let mediaFileType = `m4a`;
+let mediaFilePath = `assets/slchld-she-likes-spring-I-prefer-winter.m4a`;
+let fft;
+let video;
+let poseNet;
+let targetX = 0;
+let targetY = 0;
+
 class Attractor {
   constructor(x, y, m) {
     this.location = createVector(x, y);
@@ -9,13 +19,13 @@ class Attractor {
 
   // mover of type Mover
   attract(mover) {
-    var force = this.location.copy();
+    let force = this.location.copy();
     force.sub(mover.location);
-    var distance = force.mag();
-    distance = constrain(distance, 2, 30);
+    let distance = force.mag();
+    distance = constrain(distance, 5, 20);
     force.normalize();
 
-    var strength = (this.G * this.mass * mover.mass) / (distance * distance);
+    let strength = (this.G * this.mass * mover.mass) / (distance * distance);
     force.mult(strength);
 
     return force;
@@ -38,16 +48,20 @@ class Attractor {
     f.mult(1);
     this.acceleration.add(f);
   }
+
+  changeLocation(x, y) {
+    this.location = createVector(x, y);
+  }
 }
 
 class Mover {
   constructor(x, y, m) {
     this.location = createVector(x, y);
-    this.velocity = createVector(random(-0.5, 0.5), random(-0.5, 0.5));
+    this.velocity = createVector(0.2, 0);
     this.acceleration = createVector(0, 0);
     this.history = []; // Array of p5.Vector
     this.mass = m;
-    this.G = 0.1;
+    this.G = 0.3;
   }
 
   update() {
@@ -72,23 +86,22 @@ class Mover {
   }
 
   applyForce(force) {
-    var f = force.copy();
+    let f = force.copy();
     f.mult(1);
     this.acceleration.add(f);
   }
 
   attract(other) {
-    var force = this.location.copy();
+    let force = this.location.copy();
     force.sub(other.location);
-    var distance = force.mag();
+    let distance = force.mag();
     force.normalize();
 
-    var strength = (this.G * this.mass * other.mass) / (distance * distance);
+    let strength = (this.G * this.mass * other.mass) / (distance * distance);
     force.mult(strength);
 
     return force;
   }
-
 }
 
 var song;
@@ -103,28 +116,37 @@ var video;
 var poseNet;
 
 function preload() {
-  soundFormats('mp3');
-  song = loadSound('assets/lie.mp3');
+  soundFormats(mediaFileType);
+  song = loadSound(mediaFilePath);
 }
 
+let attractor;
+let movers;
 
 function setup() {
-  var cvs = createCanvas(1000, 1000);
+  let cvs = createCanvas(1200, 800);
+
+  targetX = width / 2;
+  targetY = height / 2;
+
+  video = createCapture(VIDEO);
+  poseNet = ml5.poseNet(video, 'single', () => {
+    console.log('Model ready');
+  });
+  poseNet.on('pose', (results) => {
+    if (results.length > 0) {
+      targetX = results[0].pose.keypoints[10].position.x;
+      targetY = results[0].pose.keypoints[10].position.y;
+      // console.log(`${targetX} / ${targetY}`);
+    }
+  });
+  video.hide();
+
   cvs.parent('canvasContainer');
   background(255);
   cvs.mousePressed(toggle);
 
-  video = createCapture(VIDEO);
-  video.hide();
-  poseNet = ml5.poseNet(video, () => { console.log('Model ready.'); });
-  poseNet.on('pose', (poses) => {
-    if (poses.length > 0) {
-      noseX = -poses[0].pose.keypoints[0].position.x + width - 200;
-      noseY = poses[0].pose.keypoints[0].position.y + 300;
-    }
-  });
-
-  song.setVolume(0.8);
+  song.setVolume(0.5);
   song.play();
   amplitude = new p5.Amplitude();
 
@@ -133,18 +155,22 @@ function setup() {
   attractor = new Attractor(width/2, height/2, 10);
   movers = [];
 
-  for (var i = 0; i < 120; i++) {
-    movers[i] = new Mover(random(width), random(height), random(2, 5));
+  for (let i = 0; i < 24; i++) {
+    movers[i] = new Mover(random(width), random(height), 2);
   }
 }
 
 function draw() {
   background(255);
-  var spectrum = fft.analyze();
-  var level = amplitude.getLevel();
+  let spectrum = fft.analyze();
 
-  for (var i = 0; i < movers.length; i++) {
-    var energy;
+  attractor.changeLocation(
+    map(targetX, -100, 400, width, 0),
+    map(targetY, -100, 400, 0, height/2)
+  );
+
+  for (let i = 0; i < movers.length; i++) {
+    let energy;
 
     if (i >= 0 && i <= 64) {
       energy = fft.getEnergy("bass");
@@ -156,13 +182,7 @@ function draw() {
       energy = fft.getEnergy("treble");
     }
 
-    attractor.updateLocation(
-      createVector(
-        noseX,
-        noseY
-      )
-    );
-    movers[i].changeMass(map(energy, 0, 255, 1, 20));
+    movers[i].changeMass(map(energy, 0, 255, 2, 10));
     movers[i].applyForce(attractor.attract(movers[i]));
     movers[i].update();
 
