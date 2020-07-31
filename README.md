@@ -1,7 +1,11 @@
 ## Music Visualizer
 
 [Demo Link](https://music-visualizer-private-copy.vercel.app/)
-> Notes: Please wait for around 2-3 seconds for everything to load properly and then click twice on the artboard to play :)
+
+## Prerequisites and Notes
+
+- Please allow for camera access to allow PoseNet to work properly.
+- Please wait for around 2-3 seconds for everything to load properly and then click twice on the artboard to play.
 
 ## Tech stack
 
